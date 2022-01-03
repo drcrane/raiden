@@ -2,3 +2,4 @@ id_ed25519
 id_ed25519.pub
 ssh_host_ed25519_key
 ssh_host_ed25519_key.pub
+etc/openvpn/static.key

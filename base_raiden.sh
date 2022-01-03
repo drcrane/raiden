@@ -15,7 +15,17 @@ run_root() {
 		/bin/sh -c "$*"
 }
 
-run_root apk add chrony lvm2 drbd samba
+run_root apk add chrony lvm2 drbd samba-dc krb5 samba-winbind-clients acl openldap-clients
 run_root rc-update add chronyd default
 run_root rc-update add lvm sysinit
+
+run_root apk add openvpn
+echo 'tun' >> ${MOUNTPOINT}/etc/modules
+cp etc/openvpn/openvpn-${hostname}.conf ${MOUNTPOINT}/etc/openvpn
+if [ -f etc/openvpn/static.key ] ; then
+cp etc/openvpn/static.key ${MOUNTPOINT}/etc/openvpn/
+else
+run_root openvpn --genkey secret /etc/openvpn/static.key
+cp ${MOUNTPOINT}/etc/openvpn/ etc/openvpn/static.key
+fi
 
