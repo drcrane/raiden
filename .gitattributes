@@ -1,0 +1,4 @@
+* auto
+*.sh text eol=lf
+*.md text eol=lf
+apk.static binary
