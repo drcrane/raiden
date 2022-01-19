@@ -28,4 +28,6 @@ else
 run_root openvpn --genkey secret /etc/openvpn/static.key
 cp ${MOUNTPOINT}/etc/openvpn/ etc/openvpn/static.key
 fi
+run_root cd /etc/init.d && ln -s openvpn openvpn-${hostname}
+run_root rc-update add openvpn-${hostname} default
 
