@@ -8,6 +8,7 @@ set -e
 which sfdisk
 which losetup
 which mkfs.ext4
+which mkfs.vfat
 
 which ssh-keygen
 
@@ -36,19 +37,19 @@ qemu-img create -f raw root.img.raw 16G
 trap cleanup EXIT
 
 losetup ${LOOPDEV} root.img.raw
-# dd if=/usr/share/syslinux/mbr.bin of=${LOOPDEV} bs=1 count=440
+
+# Creating a GPT Partition Table
 sfdisk --no-reread ${LOOPDEV} <<EOF
-1M,100M,L,*
+label:GPT
+1M,256M,C12A7328-F81F-11D2-BA4B-00A0C93EC93B,*
 ,2048M,S
 ,,L
 EOF
-# mdev -s
-# partprobe --summary ${LOOPDEV}
 
 losetup --detach ${LOOPDEV}
 losetup --partscan ${LOOPDEV} root.img.raw
 
-mkfs.ext4 -O ^has_journal ${LOOPDEV}p1
+mkfs.vfat -F 32 /dev/loop5p1
 mkswap ${LOOPDEV}p2
 mkfs.ext4 -O ^has_journal ${LOOPDEV}p3
 
@@ -101,6 +102,7 @@ http://dl-cdn.alpinelinux.org/alpine/$release/main
 http://dl-cdn.alpinelinux.org/alpine/$release/community
 EOF
 fi
+run_root setup-keymap gb gb
 
 mount --bind /dev ${MOUNTPOINT}/dev
 mount --bind /dev/pts ${MOUNTPOINT}/dev/pts
@@ -109,10 +111,22 @@ mount --bind /proc ${MOUNTPOINT}/proc
 mount --bind /run ${MOUNTPOINT}/run
 mount --bind /sys ${MOUNTPOINT}/sys
 
-run_root apk add syslinux
-run_root dd if=/usr/share/syslinux/mbr.bin of=${LOOPDEV} bs=1 count=440
+# don't execute the installation script for syslinux
+run_root apk add --no-scripts syslinux
+run_root dd if=/usr/share/syslinux/gptmbr.bin of=${LOOPDEV} bs=1 count=440
 run_root extlinux -i /boot
-#extlinux -i ${MOUNTPOINT}/boot
+
+mkdir -p ${MOUNTPOINT}/boot/EFI/BOOT/
+cp ${MOUNTPOINT}/usr/share/syslinux/efi64/syslinux.efi ${MOUNTPOINT}/boot/EFI/BOOT/bootx64.efi
+cp ${MOUNTPOINT}/usr/share/syslinux/efi64/ldlinux.e64 ${MOUNTPOINT}/boot/EFI/BOOT/ldlinux.e64
+
+cat >${MOUNTPOINT}/boot/EFI/BOOT/syslinux.cfg <<EOF
+DEFAULT linux
+LABEL linux
+	LINUX /vmlinuz-virt
+	INITRD /initramfs-virt
+	APPEND root=/dev/vda3 rw modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4
+EOF
 
 run_root apk add openssh haveged doas
 
@@ -151,11 +165,10 @@ run_root chown root:root /etc/ssh/ssh_host_ed25519_key.pub
 run_root mkdir /root/.ssh
 run_root chmod go-rwx /root/.ssh
 cat id_ed25519.pub >> ${MOUNTPOINT}/root/.ssh/authorized_keys
-run_root adduser -u 1000 -D -h /home/build -s /bin/sh build
-run_root adduser build wheel
-run_root adduser build kvm
-run_root adduser build abuild
-run_root passwd -u build
+run_root adduser -u 1000 -D -h /home/${defusername} -s /bin/ash ${defusername}
+run_root adduser ${defusername} wheel
+run_root adduser ${defusername} kvm
+run_root passwd -u ${defusername}
 
 printf '%s\n' "permit nopass keepenv :wheel" >> ${MOUNTPOINT}/etc/doas.d/doas.conf
 rm -f ${MOUNTPOINT}/etc/motd

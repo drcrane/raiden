@@ -1,23 +1,33 @@
 #!/bin/sh
+set -e
 
 . ./vmconfig.sh
 
-qemu-system-x86_64 -enable-kvm \
-	-name ${VMNAME} \
-	-k en-gb \
-	-m ${RAMMB} \
-	-cpu host \
-	-machine q35 \
-	-nodefaults \
-	-smp 2 \
-	-rtc base=utc \
-	-vga std \
-	-vnc :${NUMBER} \
-	-monitor tcp:127.0.0.1:$((6000+${NUMBER})),server,nowait \
-	-net nic,model=virtio,macaddr=${MACADDR0} \
-	-net tap,ifname=${TAPDEV0},script=no,downscript=no \
-	-drive if=virtio,file=${IMAGENAME},format=${IMAGEFORMAT},discard=unmap \
-	-fsdev local,id=exp2,path=hostshare,security_model=passthrough \
-	-device virtio-9p-pci,fsdev=exp2,mount_tag=hostshare
+if [ ! -d ${VMPASSTHRU} ] ; then
+echo "Cannot find passthrough directory" >&2
+exit 1
+fi
 
+# requires a tun/tap device
+
+# ip link add name br0 type bridge
+# ip link dev br0 set up
+# ip tuntap add tap7 mode tap
+# ip link set tap7 up
+# Bridge the adapter:
+# ip link set tap7 master br0
+
+qemu-system-x86_64 -name ${VMNAME} \
+	-enable-kvm -machine q35 -cpu host -smp 2 \
+	-nodefaults \
+	-rtc base=utc \
+	-vga qxl \
+	-spice port=${VMSPICEPORT},addr=${VMSPICEIP},disable-ticketing \
+	-bios /usr/share/edk2-ovmf/OVMF_CODE.fd \
+	-m ${VMRAMMB} \
+	-drive file=${VMIMAGENAME},format=${VMIMAGEFORMAT},if=virtio \
+	-fsdev local,id=exp1,path=${VMPASSTHRU},security_model=passthrough \
+	-device virtio-9p-pci,fsdev=exp1,mount_tag=host${VMNAME} \
+	-device virtio-net-pci,netdev=${TAPDEV0},mac=02:ca:fe:d0:0d:01 \
+	-netdev tap,id=${TAPDEV0},ifname=${TAPDEV0},script=no
 
