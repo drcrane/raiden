@@ -8,21 +8,15 @@ echo "Cannot find passthrough directory" >&2
 exit 1
 fi
 
-# requires a tun/tap device
-
-# ip link add name br0 type bridge
-# ip link dev br0 set up
-# ip tuntap add tap7 mode tap
-# ip link set tap7 up
-# Bridge the adapter:
-# ip link set tap7 master br0
+echo To connect with spice:
+echo spicy --host=${VMSPICEIP} --port=${VMSPICEPORT}
 
 qemu-system-x86_64 -name ${VMNAME} \
 	-enable-kvm -machine q35 -cpu host -smp 2 \
 	-nodefaults \
 	-rtc base=utc \
 	-vga qxl \
-	-spice port=${VMSPICEPORT},addr=${VMSPICEIP},disable-ticketing \
+	-spice port=${VMSPICEPORT},addr=${VMSPICEIP},disable-ticketing=on \
 	-bios /usr/share/edk2-ovmf/OVMF_CODE.fd \
 	-m ${VMRAMMB} \
 	-drive file=${VMIMAGENAME},format=${VMIMAGEFORMAT},if=virtio \

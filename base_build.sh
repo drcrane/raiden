@@ -30,7 +30,7 @@ sync
 }
 
 if [ ! -f id_ed25519.pub ] ; then
-ssh-keygen -t ed25519 -f id_ed25519 -q -N ""
+ssh-keygen -t ed25519 -f id_ed25519 -C "root@${hostname}" -q -N ""
 fi
 
 qemu-img create -f raw root.img.raw 16G
@@ -154,7 +154,7 @@ if [ ! -f etc/ssh/ssh_host_ed25519_key ]; then
 if [ ! -d etc/ssh ] ; then
 mkdir -p etc/ssh
 fi
-ssh-keygen -t ed25519 -f etc/ssh/ssh_host_ed25519_key -q -N ""
+ssh-keygen -t ed25519 -f etc/ssh/ssh_host_ed25519_key -C "${hostname}" -q -N ""
 fi
 cp etc/ssh/ssh_host_ed25519_key ${MOUNTPOINT}/etc/ssh/
 run_root chown root:root /etc/ssh/ssh_host_ed25519_key
@@ -165,7 +165,7 @@ run_root chown root:root /etc/ssh/ssh_host_ed25519_key.pub
 run_root mkdir /root/.ssh
 run_root chmod go-rwx /root/.ssh
 cat id_ed25519.pub >> ${MOUNTPOINT}/root/.ssh/authorized_keys
-run_root adduser -u 1000 -D -h /home/${defusername} -s /bin/ash ${defusername}
+run_root adduser -u 1000 -G users -D -h /home/${defusername} -s /bin/ash ${defusername}
 run_root adduser ${defusername} wheel
 run_root adduser ${defusername} kvm
 run_root passwd -u ${defusername}

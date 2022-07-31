@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/ash
 
 . ./vmconfig.sh
 
@@ -12,7 +12,7 @@ qemu-system-x86_64 -enable-kvm \
 	-smp 2 \
 	-rtc base=utc \
 	-vga qxl \
-	-spice port=$((5900+${VMNUMBER})),addr=127.0.0.1,disable-ticketing \
+	-spice port=${VMSPICEPORT},addr=${VMSPICEIP},disable-ticketing=on \
 	-monitor tcp:127.0.0.1:$((6000+${VMNUMBER})),server,nowait \
 	-net nic,model=virtio,macaddr=${MACADDR0} \
 	-net tap,ifname=${TAPDEV0},script=no,downscript=no \

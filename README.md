@@ -6,7 +6,8 @@ samba4 domain controller: scripted creation.
 This is for a x86\_64 VM (`apk.static` is a static binary that should
 execute on any x86\_64 linux machine).
 
-This script makes an image using BIOS booting and MSDOS partition table.
+This script makes an image using UEFI booting and GPT partition table
+with syslinux.
 
 Theory of Operation
 -------------------
