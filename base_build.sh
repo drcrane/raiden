@@ -49,7 +49,7 @@ EOF
 losetup --detach ${LOOPDEV}
 losetup --partscan ${LOOPDEV} root.img.raw
 
-mkfs.vfat -F 32 /dev/loop5p1
+mkfs.vfat -F 32 ${LOOPDEV}p1
 mkswap ${LOOPDEV}p2
 mkfs.ext4 -O ^has_journal ${LOOPDEV}p3
 
