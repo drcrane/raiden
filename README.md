@@ -22,6 +22,8 @@ To begin the host machine should have some utilities:
 * `mkfs.ext4`
 * `qemu-img`
 
+The busybox losetup is not good enough for this script
+
 See `base_build.sh` for details.
 
 The various scripts should be executed in order:
