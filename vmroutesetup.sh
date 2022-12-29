@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-# set -x
+set -x
 
 . ./vmconfig.sh
 
@@ -14,39 +14,39 @@ ARGV1=$1
 
 echo "Deleting Rules..."
 
-iptables -t mangle -D PREROUTING -i $TAPDEV --dst $HOSTIP -j ACCEPT 2>/dev/null || true
+iptables -t mangle -D PREROUTING -i ${VMTAPDEV0} --dst ${VMHOSTIP}/32 -j ACCEPT 2>/dev/null || true
 
-set -- $VPNSRV
+set -- ${VMVPNSRV}
 while [ -n "$1" ]
 do
-iptables -t mangle -D PREROUTING -i $TAPDEV --dst $1 -j ACCEPT 2>/dev/null || true
-iptables -t nat -D POSTROUTING -o $OUTIF --src $CLIIP --dst $1 -j MASQUERADE 2>/dev/null || true
+iptables -t mangle -D PREROUTING -i ${VMTAPDEV} --dst $1 -j ACCEPT 2>/dev/null || true
+iptables -t nat -D POSTROUTING -o ${VMOUTIF} --src $CLIIP --dst $1 -j MASQUERADE 2>/dev/null || true
 shift
 done
-iptables -t mangle -D PREROUTING -i $TAPDEV -j DROP 2>/dev/null || true
+iptables -t mangle -D PREROUTING -i ${VMTAPDEV0} -j DROP 2>/dev/null || true
 
-iptables -t mangle -D PREROUTING -i $TAPDEV --dst 0.0.0.0/0 -j ACCEPT 2>/dev/null || true
-iptables -t nat -D POSTROUTING --src $CLIIP -o $OUTIF -j MASQUERADE 2>/dev/null || true
+iptables -t mangle -D PREROUTING -i ${VMTAPDEV0} --dst 0.0.0.0/0 -j ACCEPT 2>/dev/null || true
+iptables -t nat -D POSTROUTING --src ${VMCLIIP} -o ${VMOUTIF} -j MASQUERADE 2>/dev/null || true
 
 echo "Rules Deleted."
 
 allowall() {
 echo "Allowing All..."
-iptables -t mangle -A PREROUTING -i $TAPDEV --dst 0.0.0.0/0 -j ACCEPT
-iptables -t nat -A POSTROUTING --src $CLIIP -o $OUTIF -j MASQUERADE
+iptables -t mangle -A PREROUTING -i ${VMTAPDEV0} --dst 0.0.0.0/0 -j ACCEPT
+iptables -t nat -A POSTROUTING --src ${VMCLIIP}/32 -o ${VMOUTIF} -j MASQUERADE
 }
 
 allowvpnonly() {
 echo "Allowing VPN Only..."
-iptables -t mangle -A PREROUTING -i $TAPDEV --dst $HOSTIP -j ACCEPT
-set -- $VPNSRV
+iptables -t mangle -A PREROUTING -i ${VMTAPDEV0} --dst ${VMHOSTIP}/32 -j ACCEPT
+set -- ${VMVPNSRV}
 while [ -n "$1" ]
 do
-iptables -t mangle -A PREROUTING -i $TAPDEV --dst $1 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $OUTIF --src $CLIIP --dst $1 -j MASQUERADE
+iptables -t mangle -A PREROUTING -i $${VMTAPDEV0} --dst $1 -j ACCEPT
+iptables -t nat -A POSTROUTING -o ${VMOUTIF0} --src ${VMCLIIP}/32 --dst $1 -j MASQUERADE
 shift
 done
-iptables -t mangle -A PREROUTING -i $TAPDEV -j DROP
+iptables -t mangle -A PREROUTING -i ${VMTAPDEV0} -j DROP
 }
 
 echo "Adding Rules"

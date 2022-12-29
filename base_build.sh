@@ -5,14 +5,15 @@ set -e
 . ./base_config.sh
 
 # these are in util-linux on gentoo
+# apk add sfdisk losetup 
 which sfdisk
 which losetup
+losetup --version |grep 'losetup from util-linux'
 which mkfs.ext4
 which mkfs.vfat
-
 which ssh-keygen
-
 which qemu-img
+lsmod |grep loop
 
 if [ -f root.img.raw ] ; then
 echo "found existing disk image, delete to continue" 1>&2
@@ -33,7 +34,7 @@ if [ ! -f id_ed25519.pub ] ; then
 ssh-keygen -t ed25519 -f id_ed25519 -C "root@${hostname}" -q -N ""
 fi
 
-qemu-img create -f raw root.img.raw 16G
+qemu-img create -f raw root.img.raw ${VMDISKSIZE}
 trap cleanup EXIT
 
 losetup ${LOOPDEV} root.img.raw
@@ -42,7 +43,7 @@ losetup ${LOOPDEV} root.img.raw
 sfdisk --no-reread ${LOOPDEV} <<EOF
 label:GPT
 1M,256M,C12A7328-F81F-11D2-BA4B-00A0C93EC93B,*
-,2048M,S
+,${VMSWAPSIZE},S
 ,,L
 EOF
 
@@ -65,6 +66,13 @@ run_root() {
 		/bin/sh -c "$*"
 }
 
+# do this from host os since then we will cache alpine-base etc
+mkdir -p "${MOUNTPOINT}/var/cache/apk"
+mkdir -p "${MOUNTPOINT}/etc/apk"
+sh -c 'cd '"${MOUNTPOINT}"'/etc/apk ; [ ! -d cache ] && ln -s ../../var/cache/apk cache'
+
+# exit
+
 ./apk.static add --update-cache \
 	--repository http://dl-cdn.alpinelinux.org/alpine/$release/main/ \
 	--allow-untrusted \
@@ -72,6 +80,11 @@ run_root() {
 	--root=${MOUNTPOINT} \
 	--initdb \
 	acct alpine-base alpine-conf $linux
+
+# do it here and the above packages will not be cached.
+# run_root mkdir -p /var/cache/apk
+# run_root mkdir -p /etc/apk
+# run_root 'cd /etc/apk ; [ ! -d cache ] && ln -s ../../var/cache/apk cache'
 
 run_root setup-hostname -n ${hostname}
 run_root setup-interfaces -i <<EOF
@@ -87,8 +100,9 @@ iface eth0 inet static
 	post-up ip route add default via ${defgateway} dev eth0
 EOF
 
-run_root setup-dns -d example.org 74.82.42.42 23.253.163.53
-run_root setup-timezone -z Europe/London
+# run_root setup-dns -d ${VMDNSDOMAIN} ${VMDNSSERVER0} ${VMDNSSERVER1}
+# run_root setup-timezone -z ${VMTIMEZONE}
+
 if [ "$release" = "edge" ]
 then
 	cat >${MOUNTPOINT}/etc/apk/repositories <<EOF
@@ -103,6 +117,10 @@ http://dl-cdn.alpinelinux.org/alpine/$release/community
 EOF
 fi
 run_root setup-keymap gb gb
+
+run_root setup-dns -d ${VMDNSDOMAIN} ${VMDNSSERVER0} ${VMDNSSERVER1}
+run_root apk add tzdata
+run_root setup-timezone -z ${VMTIMEZONE}
 
 mount --bind /dev ${MOUNTPOINT}/dev
 mount --bind /dev/pts ${MOUNTPOINT}/dev/pts
@@ -134,7 +152,7 @@ run_root rc-update add sshd default
 run_root rc-update add crond default
 run_root rc-update add haveged default
 run_root rc-update add local default
-for i in hwclock modules sysctl hostname bootmisc networking syslog swap urandom
+for i in hwclock modules sysctl hostname bootmisc networking syslog swap seedrng
 do
 	run_root rc-update add $i boot
 done
