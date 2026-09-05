@@ -156,10 +156,12 @@ A chroot of Alpine Linux will work around this problem:
     cd chroot
     tar -xf ../alpine-minirootfs-3.24.1-x86_64.tar.gz
     cd ..
-    ./chroot_mount.sh
+    ./chroot_mount.sh chroot
     chroot chroot /bin/ash
     <<< setup /etc/resolv.conf, apk add qemu-system-x86_64 >>>
-    ./chroot_umount.sh
+    # apk add qemu-system-x86_64 qemu-hw-display-virtio-vga
+    <<<  >>>
+    ./chroot_umount.sh chroot
 
 ## References (Credit)
 
