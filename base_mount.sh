@@ -2,13 +2,22 @@
 set -x
 set -e
 . ./base_config.sh
-losetup --partscan ${LOOPDEV} root.img.raw
-mount ${LOOPDEV}p3 ${MOUNTPOINT}
-mount ${LOOPDEV}p1 ${MOUNTPOINT}/boot
-mount --bind /dev ${MOUNTPOINT}/dev
-mount --bind /dev/pts ${MOUNTPOINT}/dev/pts
-mount --bind /dev/shm ${MOUNTPOINT}/dev/shm
-mount --bind /proc ${MOUNTPOINT}/proc
-mount --bind /run ${MOUNTPOINT}/run
-mount --bind /sys ${MOUNTPOINT}/sys
+if [ "X${VMIMAGEFMT}" == "Xqcow2" ] ; then
+qemu-nbd --connect=${VMBLKDEV} --format=${VMIMAGEFMT} "${VMIMAGE}"
+else
+losetup --partscan ${VMBLKDEV} "${VMIMAGE}"
+fi
+if [ true ] ; then
+echo -n "${VMPASSPHRASE}" |cryptsetup luksOpen ${VMBLKROOT} ${VMDMNAME} --key-file=-
+mount ${VMMAPPERROOT} ${VMMOUNTPOINT}
+else
+mount ${VMBLKROOT} ${VMMOUNTPOINT}
+fi
+mount ${VMBLKBOOT} ${VMMOUNTPOINT}/boot
+mount --bind /dev ${VMMOUNTPOINT}/dev
+mount --bind /dev/pts ${VMMOUNTPOINT}/dev/pts
+mount --bind /dev/shm ${VMMOUNTPOINT}/dev/shm
+mount --bind /proc ${VMMOUNTPOINT}/proc
+mount --bind /run ${VMMOUNTPOINT}/run
+mount --bind /sys ${VMMOUNTPOINT}/sys
 

@@ -1,15 +1,26 @@
 #!/bin/sh
 
-release=v3.17
+release=v3.24
 linux=linux-virt
 arch=x86_64
-hostname=lumina
+hostname=raiden
 defusername=user
-hostip=192.168.80.5
+defuserid=1000
+defusergroup=users
+hostip=192.168.80.21
 defgateway=192.168.80.2
 
-LOOPDEV=/dev/loop5
-MOUNTPOINT=/mnt/loop5
+VMIMAGEFMT=raw
+VMIMAGE=root.img.raw
+VMMOUNTPOINT=/mnt/loop5
+VMBLKDEV=/dev/loop5
+VMBLKBOOT=${VMBLKDEV}p1
+VMBLKSWAP=${VMBLKDEV}p2
+VMBLKROOT=${VMBLKDEV}p3
+VMENCRYPTED=false
+VMDMNAME=encryptd
+VMPASSPHRASE=password
+VMMAPPERROOT=/dev/mapper/${VMDMNAME}
 VMTIMEZONE=Europe/London
 VMDNSDOMAIN=localdomain
 VMDNSSERVER0=74.82.42.42

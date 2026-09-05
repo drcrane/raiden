@@ -1,0 +1,5 @@
+#!/bin/sh
+setup-devd udev
+setup-utmp
+rm /etc/local.d/01-$(hostname)-firstboot.start
+
