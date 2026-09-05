@@ -35,6 +35,6 @@ exec qemu-system-x86_64 -name ${VMNAME} \
 	-fsdev local,id=exp1,path=${VMPASSTHRU},security_model=passthrough \
 	-device virtio-9p-pci,fsdev=exp1,mount_tag=host${VMNAME} \
 	-device virtio-net-pci,netdev=${VMTAPDEV0},mac=${VMMACADDR0} \
-	-netdev tap,id=${VMTAPDEV0},ifname=${VMTAPDEV0},script=no \
+	-netdev tap,id=${VMTAPDEV0},ifname=${VMTAPDEV0},script=no,downscript=no \
 	-serial tcp:localhost:${VMSERIAL},server=on,wait=off
 

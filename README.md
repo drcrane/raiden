@@ -146,6 +146,21 @@ Forward the port with `iptables`
 
     iptables -t nat -A PREROUTING --proto tcp --dport 6121 -j DNAT --to 192.168.80.21:5900
 
+## Troubleshooting
+
+Artix Linux current build of `qemu-system-x86_64` fails with SIGSEGV.
+A chroot of Alpine Linux will work around this problem:
+
+    curl -O -L https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.1-x86_64.tar.gz
+    mkdir chroot
+    cd chroot
+    tar -xf ../alpine-minirootfs-3.24.1-x86_64.tar.gz
+    cd ..
+    ./chroot_mount.sh
+    chroot chroot /bin/ash
+    <<< setup /etc/resolv.conf, apk add qemu-system-x86_64 >>>
+    ./chroot_umount.sh
+
 ## References (Credit)
 
 This work is a rip-off from [builds.sr.ht](https://git.sr.ht/~sircmpwn/builds.sr.ht/tree/master/item/images/alpine)

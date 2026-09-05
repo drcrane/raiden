@@ -223,11 +223,11 @@ EOF
 if [ "x${VMENCRYPTED}" == "xfalse" ] ; then
 
 cat >>${VMMOUNTPOINT}/boot/extlinux.conf <<EOF
-	APPEND root=/dev/vda3 rw modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4
+	APPEND root=/dev/vda3 rw modules=sd-mod,usb-storage,vfat,ext4 quiet rootfstype=ext4
 EOF
 
 cat >>${VMMOUNTPOINT}/etc/fstab <<EOF
-/dev/vda1 /boot ext4 rw,relatime 0 0
+/dev/vda1 /boot vfat rw,relatime 0 0
 /dev/vda2 swap swap defaults 0 0
 /dev/vda3 / ext4 rw,relatime 0 0
 EOF
@@ -238,11 +238,11 @@ fi
 if [ "x${VMENCRYPTED}" == "xtrue" ] ; then
 
 cat >>${VMMOUNTPOINT}/boot/extlinux.conf <<EOF
-	APPEND cryptdevice=/dev/vda3:${VMDMNAME} root=/dev/mapper/${VMDMNAME} rw modules=sd-mod,usb-storage,ext4 quiet rootfstype=ext4
+	APPEND cryptdevice=/dev/vda3:${VMDMNAME} root=/dev/mapper/${VMDMNAME} rw modules=sd-mod,usb-storage,vfat,ext4 quiet rootfstype=ext4
 EOF
 
 cat >>${VMMOUNTPOINT}/etc/fstab <<EOF
-/dev/vda1 /boot ext4 rw,relatime 0 0
+/dev/vda1 /boot vfat rw,relatime 0 0
 /dev/vda2 swap swap defaults 0 0
 /dev/mapper/encryptd / ext4 rw,relatime 0 0
 EOF
